@@ -504,7 +504,7 @@ body {
 }
 
 .modal__hint {
-  margin: 0;
+  margin-top: 5px;
   color: var(--color-muted);
   font-size: 0.9rem;
 }
