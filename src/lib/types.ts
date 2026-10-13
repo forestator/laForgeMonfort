@@ -18,7 +18,13 @@ export interface GameTable {
 
 export type NewGameTable = Omit<GameTable, 'id'>;
 
+export interface Opening {
+  date: string;
+  time: string;
+}
+
 export interface KeyHolder {
   id: string;
   name: string;
+  opening?: Opening;
 }

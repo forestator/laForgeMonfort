@@ -508,3 +508,8 @@ body {
   color: var(--color-muted);
   font-size: 0.9rem;
 }
+
+.keys__opening {
+  width: 100%;
+  text-align: left;
+}

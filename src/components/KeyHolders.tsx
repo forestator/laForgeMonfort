@@ -3,7 +3,10 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { returnKey, takeKey, useKeyHolders } from '../lib/keyHolders';
 import { usePlayer } from '../lib/player';
+import { formatDateKey } from '../lib/dates';
+import { useToday } from '../lib/useToday';
 import { Modal } from './Modal';
+import { OpeningForm } from './OpeningForm';
 
 interface KeyHoldersProps {
   onClose: () => void;
@@ -15,8 +18,10 @@ export function KeyHolders({ onClose }: KeyHoldersProps) {
   const { holders, loading, failed } = useKeyHolders();
   const [busy, setBusy] = useState(false);
   const { player } = usePlayer();
+  const currentDay = useToday();
 
-  const iHaveKey = user !== null && holders.some((holder) => holder.id === user.uid);
+  const myHolder = holders.find((holder) => holder.id === user?.uid);
+  const iHaveKey = myHolder !== undefined;
 
   const toggleKey = async () => {
     if (!user) return;
@@ -61,11 +66,19 @@ export function KeyHolders({ onClose }: KeyHoldersProps) {
             {holders.map((holder) => (
               <li key={holder.id} className="chip">
                 {holder.name}
+                {/* Past announcements are hidden rather than deleted. */}
+                {holder.opening && holder.opening.date >= currentDay && (
+                  <>
+                    {' '}
+                    · ouvre {formatDateKey(holder.opening.date)} à {holder.opening.time}
+                  </>
+                )}
               </li>
             ))}
           </ul>
         </>
       )}
+      {user && myHolder && <OpeningForm userId={user.uid} current={myHolder.opening} />}
       <div className="keys__actions">
         {user ? (
           <button className="button button--primary" onClick={toggleKey} disabled={busy || failed}>
