@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Soirées Jeux</string>
+    <string name="title_activity_main">Soirées Jeux</string>
+    <string name="package_name">fr.association.soireesjeux</string>
+    <string name="custom_url_scheme">fr.association.soireesjeux</string>
+</resources>
