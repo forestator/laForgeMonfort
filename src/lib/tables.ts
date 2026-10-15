@@ -19,6 +19,9 @@ import { parseTable } from './parseTable';
 import type { GameTable, NewGameTable, Player } from './types';
 import { useToday } from './useToday';
 
+// Keep in sync with the players size limit in firestore.rules.
+export const MAX_WAITLIST = 10;
+
 const tablesCollection = collection(db, 'tables');
 
 export const useUpcomingTables = () => {

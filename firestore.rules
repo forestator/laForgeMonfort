@@ -30,9 +30,10 @@ service cloud.firestore {
         && request.resource.data.expireAt > request.time;
 
       // Anyone can join or leave, only the host can change the rest.
+      // Players past maxPlayers are on the waitlist (at most 10), in sign-up order.
       allow update: if (request.auth != null && request.auth.uid == resource.data.hostId)
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['players'])
-            && request.resource.data.players.size() <= resource.data.maxPlayers);
+            && request.resource.data.players.size() <= resource.data.maxPlayers + 10);
 
       allow delete: if request.auth != null && request.auth.uid == resource.data.hostId;
     }

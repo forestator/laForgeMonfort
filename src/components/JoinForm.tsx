@@ -3,10 +3,11 @@ import { useState, type FormEvent } from 'react';
 interface JoinFormProps {
   tableId: string;
   defaultName: string;
+  submitLabel: string;
   onJoin: (name: string) => void;
 }
 
-export function JoinForm({ tableId, defaultName, onJoin }: JoinFormProps) {
+export function JoinForm({ tableId, defaultName, submitLabel, onJoin }: JoinFormProps) {
   // Undefined until the user types, so late-arriving defaults (login) still show up.
   const [typedName, setTypedName] = useState<string>();
   const name = typedName ?? defaultName;
@@ -32,7 +33,7 @@ export function JoinForm({ tableId, defaultName, onJoin }: JoinFormProps) {
         required
       />
       <button className="button button--primary" type="submit">
-        Rejoindre
+        {submitLabel}
       </button>
     </form>
   );

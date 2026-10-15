@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { deleteTable, joinTable, leaveTable } from '../lib/tables';
+import { deleteTable, joinTable, leaveTable, MAX_WAITLIST } from '../lib/tables';
 import type { GameTable, Player } from '../lib/types';
 import { JoinForm } from './JoinForm';
 
@@ -17,10 +17,15 @@ export function TableCard({ table, player, onRegister }: TableCardProps) {
   const [error, setError] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
+  // Players are kept in sign-up order: those past maxPlayers are waitlist and move up when a seat frees.
+  const seated = table.players.slice(0, table.maxPlayers);
+  const waitlist = table.players.slice(table.maxPlayers);
   const myEntry = table.players.find((entry) => entry.id === player?.id);
+  const isWaiting = waitlist.some((entry) => entry.id === player?.id);
   const isFull = table.players.length >= table.maxPlayers;
+  const waitlistFull = waitlist.length >= MAX_WAITLIST;
   const isHost = user?.uid === table.hostId;
-  const fillPercent = Math.min(100, (table.players.length / table.maxPlayers) * 100);
+  const fillPercent = Math.min(100, (seated.length / table.maxPlayers) * 100);
   const defaultName = player?.name ?? user?.displayName ?? '';
 
   const run = async (action: () => Promise<unknown>, successMessage: string) => {
@@ -52,16 +57,26 @@ export function TableCard({ table, player, onRegister }: TableCardProps) {
           <div className="meter__fill" style={{ width: `${fillPercent}%` }} />
         </div>
         <span className="meter__label">
-          {table.players.length}/{table.maxPlayers} joueurs
+          {seated.length}/{table.maxPlayers} joueurs
+          {waitlist.length > 0 && ` · ${waitlist.length} en attente`}
         </span>
       </div>
       {table.notes && <p>{table.notes}</p>}
 
-      {table.players.length > 0 && (
+      {seated.length > 0 && (
         <ul className="players" aria-label="Joueurs inscrits">
-          {table.players.map((entry) => (
+          {seated.map((entry) => (
             <li key={entry.id} className="chip">
               {entry.name}
+            </li>
+          ))}
+        </ul>
+      )}
+      {waitlist.length > 0 && (
+        <ul className="players" aria-label="Liste d'attente">
+          {waitlist.map((entry) => (
+            <li key={entry.id} className="chip chip--waiting">
+              {entry.name} (en attente)
             </li>
           ))}
         </ul>
@@ -72,16 +87,26 @@ export function TableCard({ table, player, onRegister }: TableCardProps) {
           className="button button--ghost"
           onClick={() => run(() => leaveTable(table.id, myEntry), 'Inscription annulée')}
         >
-          Me désinscrire
+          {isWaiting ? "Quitter la liste d'attente" : 'Me désinscrire'}
         </button>
       )}
-      {!myEntry && isFull && <p className="badge">Table complète</p>}
-      {!myEntry && !isFull && (
+      {!myEntry && isFull && (
+        <p className="badge">
+          {waitlistFull
+            ? "Table et liste d'attente complètes"
+            : "Table complète : inscription en liste d'attente possible"}
+        </p>
+      )}
+      {!myEntry && !waitlistFull && (
         <JoinForm
           tableId={table.id}
           defaultName={defaultName}
+          submitLabel={isFull ? "Me mettre en liste d'attente" : 'Rejoindre'}
           onJoin={(name) =>
-            run(() => joinTable(table.id, onRegister(name)), 'Inscription enregistrée')
+            run(
+              () => joinTable(table.id, onRegister(name)),
+              isFull ? "Inscription en liste d'attente enregistrée" : 'Inscription enregistrée',
+            )
           }
         />
       )}

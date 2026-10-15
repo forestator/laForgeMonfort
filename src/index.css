@@ -177,6 +177,11 @@ body {
   font-size: 0.9rem;
 }
 
+.chip--waiting {
+  border-style: dashed;
+  color: var(--color-muted);
+}
+
 .badge {
   margin: 0;
   padding: 0.25rem 0.75rem;

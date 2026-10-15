@@ -31,3 +31,5 @@ android/app/google-services.json
 .agents/
 skills-lock.json
 .firebase/
+
+.vitest/
