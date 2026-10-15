@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { deleteTable, joinTable, leaveTable, MAX_WAITLIST } from '../lib/tables';
+import { deleteSeriesFrom, deleteTable, joinTable, leaveTable, MAX_WAITLIST } from '../lib/tables';
 import type { GameTable, Player } from '../lib/types';
 import { JoinForm } from './JoinForm';
 
@@ -125,8 +125,18 @@ export function TableCard({ table, player, onRegister }: TableCardProps) {
             className="button button--danger"
             onClick={() => run(() => deleteTable(table.id), 'Table supprimée')}
           >
-            Oui, supprimer
+            {table.seriesId ? 'Cette date seulement' : 'Oui, supprimer'}
           </button>
+          {table.seriesId && (
+            <button
+              className="button button--danger"
+              onClick={() =>
+                run(() => deleteSeriesFrom(table.seriesId!, table.date), 'Tables supprimées')
+              }
+            >
+              Cette date et les suivantes
+            </button>
+          )}
           <button className="button button--ghost" onClick={() => setConfirmingDelete(false)}>
             Annuler
           </button>

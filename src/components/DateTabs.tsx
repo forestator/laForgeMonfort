@@ -6,7 +6,13 @@ interface DateTabsProps {
   onSelect: (date: string) => void;
 }
 
-export function DateTabs({ dates, selected, onSelect }: DateTabsProps) {
+// Beyond this many dates (e.g. a recurring table), the rest moves into a menu to keep the bar compact.
+const MAX_VISIBLE_TABS = 5;
+
+export function DateTabs({ dates: allDates, selected, onSelect }: DateTabsProps) {
+  const dates = allDates.slice(0, MAX_VISIBLE_TABS);
+  const moreDates = allDates.slice(MAX_VISIBLE_TABS);
+
   const moveTo = (index: number) => {
     const target = dates[(index + dates.length) % dates.length];
     onSelect(target);
@@ -43,6 +49,23 @@ export function DateTabs({ dates, selected, onSelect }: DateTabsProps) {
           </button>
         );
       })}
+      {moreDates.length > 0 && (
+        <select
+          className="tab tab--more"
+          aria-label="Autres dates"
+          value={moreDates.includes(selected) ? selected : ''}
+          onChange={(event) => onSelect(event.target.value)}
+        >
+          <option value="" disabled>
+            Autres dates ({moreDates.length})
+          </option>
+          {moreDates.map((date) => (
+            <option key={date} value={date}>
+              {formatDateKey(date)}
+            </option>
+          ))}
+        </select>
+      )}
     </div>
   );
 }

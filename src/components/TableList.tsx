@@ -32,13 +32,10 @@ export function TableList() {
   return (
     <>
       <DateTabs dates={dates} selected={selectedDate} onSelect={setChosenDate} />
-      <section
-        id="tab-panel"
-        className="day"
-        role="tabpanel"
-        aria-labelledby={`tab-${selectedDate}`}
-      >
-        <h2 className="day__title">{formatDateKey(selectedDate)}</h2>
+      <section id="tab-panel" className="day" role="tabpanel" aria-labelledby="day-title">
+        <h2 id="day-title" className="day__title">
+          {formatDateKey(selectedDate)}
+        </h2>
         {tables
           .filter((table) => table.date === selectedDate)
           .map((table) => (

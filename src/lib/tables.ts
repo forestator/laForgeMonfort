@@ -1,16 +1,17 @@
 import {
-  addDoc,
   arrayRemove,
   arrayUnion,
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
   Timestamp,
   updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { expiryOf } from './dates';
@@ -53,8 +54,17 @@ export const useUpcomingTables = () => {
 };
 
 // expireAt feeds the Firestore TTL policy that deletes old tables.
-export const createTable = (table: NewGameTable) =>
-  addDoc(tablesCollection, { ...table, expireAt: Timestamp.fromDate(expiryOf(table.date)) });
+// One batch keeps a recurrence all-or-nothing instead of leaving a half-created series.
+export const createTables = (tables: NewGameTable[]) => {
+  const batch = writeBatch(db);
+  for (const table of tables) {
+    batch.set(doc(tablesCollection), {
+      ...table,
+      expireAt: Timestamp.fromDate(expiryOf(table.date)),
+    });
+  }
+  return batch.commit();
+};
 
 export const deleteTable = (tableId: string) => deleteDoc(doc(db, 'tables', tableId));
 
@@ -63,3 +73,12 @@ export const joinTable = (tableId: string, player: Player) =>
 
 export const leaveTable = (tableId: string, player: Player) =>
   updateDoc(doc(db, 'tables', tableId), { players: arrayRemove(player) });
+
+export const deleteSeriesFrom = async (seriesId: string, fromDate: string) => {
+  const snapshot = await getDocs(query(tablesCollection, where('seriesId', '==', seriesId)));
+  const batch = writeBatch(db);
+  for (const document of snapshot.docs) {
+    if (document.data().date >= fromDate) batch.delete(document.ref);
+  }
+  return batch.commit();
+};

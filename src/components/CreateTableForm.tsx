@@ -1,10 +1,10 @@
 import type { User } from 'firebase/auth';
 import { useMemo, useState, type FormEvent } from 'react';
-import { formatDateKey, upcomingGameDays } from '../lib/dates';
+import { formatDateKey, isRoleplayDay, upcomingGameDays, weeklyDates } from '../lib/dates';
 import { useToast } from '../context/ToastContext';
 import { isGameSearchEnabled } from '../lib/bgg';
 import { usePlayer } from '../lib/player';
-import { createTable } from '../lib/tables';
+import { createTables } from '../lib/tables';
 import { GameSearch } from './GameSearch';
 import { TimeField } from './TimeField';
 
@@ -14,7 +14,9 @@ interface CreateTableFormProps {
 }
 
 const DEFAULT_MAX_PLAYERS = 4;
-const PROPOSED_DAYS = 8;
+const PROPOSED_DAYS = 9;
+// Capped so a recurrence cannot flood the date tabs.
+const RECURRENCE_CHOICES = [1, 2, 4, 6, 8];
 const GAME_NAME_MAX_LENGTH = 80;
 
 export function CreateTableForm({ user, onDone }: CreateTableFormProps) {
@@ -29,6 +31,8 @@ export function CreateTableForm({ user, onDone }: CreateTableFormProps) {
   const [notes, setNotes] = useState('');
   const [startTime, setStartTime] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
+  const [occurrences, setOccurrences] = useState(1);
+  const roleplay = isRoleplayDay(date);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,20 +41,25 @@ export function CreateTableForm({ user, onDone }: CreateTableFormProps) {
     setSaving(true);
     setError('');
     try {
-      await createTable({
-        date,
-        gameName: gameName.trim(),
-        hostId: user.uid,
-        hostName,
-        maxPlayers,
-        notes: notes.trim(),
-        // Registering reuses the browser's player id, so the host can leave or rejoin like anyone.
-        players: [register(hostName)],
-        // Firestore rejects undefined, so optional fields are only sent when filled.
-        ...(startTime && { startTime }),
-        ...(coverUrl && { coverUrl }),
-      });
-      notify('Table créée');
+      const seriesId = roleplay && occurrences > 1 ? crypto.randomUUID() : undefined;
+      const dates = roleplay ? weeklyDates(date, occurrences) : [date];
+      await createTables(
+        dates.map((day) => ({
+          date: day,
+          gameName: gameName.trim(),
+          hostId: user.uid,
+          hostName,
+          maxPlayers,
+          notes: notes.trim(),
+          // Registering reuses the browser's player id, so the host can leave or rejoin like anyone.
+          players: [register(hostName)],
+          // Firestore rejects undefined, so optional fields are only sent when filled.
+          ...(startTime && { startTime }),
+          ...(coverUrl && { coverUrl }),
+          ...(seriesId && { seriesId }),
+        })),
+      );
+      notify(dates.length > 1 ? `${dates.length} tables créées` : 'Table créée');
       onDone();
     } catch {
       setError('Impossible de créer la table. Réessayez.');
@@ -81,7 +90,26 @@ export function CreateTableForm({ user, onDone }: CreateTableFormProps) {
         </select>
       </label>
 
-      {isGameSearchEnabled && (
+      {roleplay && (
+        <label className="field">
+          <span className="field__label">Répétition (optionnel)</span>
+          <select
+            className="field__input"
+            value={occurrences}
+            onChange={(event) => setOccurrences(Number(event.target.value))}
+          >
+            {RECURRENCE_CHOICES.map((count) => (
+              <option key={count} value={count}>
+                {count === 1
+                  ? 'Ce vendredi uniquement'
+                  : `Chaque vendredi pendant ${count} semaines`}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {isGameSearchEnabled && !roleplay && (
         <GameSearch
           onPick={(game) => {
             setGameName(game.name.slice(0, GAME_NAME_MAX_LENGTH));
@@ -91,7 +119,7 @@ export function CreateTableForm({ user, onDone }: CreateTableFormProps) {
       )}
 
       <label className="field">
-        <span className="field__label">Jeu</span>
+        <span className="field__label">{roleplay ? 'Jeu de rôle / scénario' : 'Jeu'}</span>
         <input
           className="field__input"
           value={gameName}

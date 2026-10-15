@@ -14,6 +14,8 @@ export interface GameTable {
   players: Player[];
   startTime?: string;
   coverUrl?: string;
+  // Shared by the tables created together by a weekly recurrence.
+  seriesId?: string;
 }
 
 export type NewGameTable = Omit<GameTable, 'id'>;

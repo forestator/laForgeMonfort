@@ -11,8 +11,18 @@ const optionalString = (value: string | undefined) =>
 
 // Firestore data is untrusted: drop documents that do not match the expected shape.
 export const parseTable = (id: string, data: DocumentData): GameTable | null => {
-  const { date, gameName, hostId, hostName, maxPlayers, notes, players, startTime, coverUrl } =
-    data;
+  const {
+    date,
+    gameName,
+    hostId,
+    hostName,
+    maxPlayers,
+    notes,
+    players,
+    startTime,
+    coverUrl,
+    seriesId,
+  } = data;
   const valid =
     typeof date === 'string' &&
     typeof gameName === 'string' &&
@@ -34,5 +44,6 @@ export const parseTable = (id: string, data: DocumentData): GameTable | null => 
     startTime: TIME_PATTERN.test(startTime ?? '') ? startTime : undefined,
     // Only https images are rendered, whatever is stored.
     coverUrl: optionalString(coverUrl)?.startsWith('https://') ? coverUrl : undefined,
+    seriesId: optionalString(seriesId),
   };
 };

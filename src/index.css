@@ -348,6 +348,11 @@ body {
   font-weight: 700;
 }
 
+.tab--more {
+  appearance: auto;
+  background: var(--color-surface, transparent);
+}
+
 /* Covers */
 .card__header,
 .cover-preview {

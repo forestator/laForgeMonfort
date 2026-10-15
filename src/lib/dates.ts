@@ -1,6 +1,8 @@
 const THURSDAY = 4;
+const FRIDAY = 5;
 const SATURDAY = 6;
-const GAME_DAYS = [THURSDAY, SATURDAY];
+const GAME_DAYS = [THURSDAY, FRIDAY, SATURDAY];
+const DAYS_PER_WEEK = 7;
 
 const pad = (value: number) => String(value).padStart(2, '0');
 
@@ -28,6 +30,16 @@ export const upcomingGameDays = (count: number) => {
   }
   return days;
 };
+
+export const isRoleplayDay = (dateKey: string) => fromDateKey(dateKey).getDay() === FRIDAY;
+
+// The start date plus the following weeks, e.g. every Friday for a recurring table.
+export const weeklyDates = (startKey: string, weeks: number) =>
+  Array.from({ length: weeks }, (_, index) => {
+    const day = fromDateKey(startKey);
+    day.setDate(day.getDate() + index * DAYS_PER_WEEK);
+    return toDateKey(day);
+  });
 
 export const today = () => toDateKey(new Date());
 
